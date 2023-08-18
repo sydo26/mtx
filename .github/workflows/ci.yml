@@ -1,0 +1,107 @@
+name: Global CI
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+env:
+  RUST_BACKTRACE: full
+  CI: 1
+  CARGO_INCREMENTAL: 0
+  RUST_LOG: "debug"
+
+jobs:
+  check-deny:
+    name: Check with Deny
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the repository
+      - uses: actions/checkout@v3
+
+
+      # Install Rust toolchain
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+
+      # Install required tools
+      - name: Install cargo-deny
+        run: |
+          cargo install cargo-deny
+
+      # Use cache to speed up builds
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/
+            target
+            Cargo.lock
+          key: check-with-clippy
+
+
+      # Execute deny check
+      - name: Check with Deny
+        run: | 
+          cargo deny check
+
+  clippy:
+    name: Check
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the repository
+      - uses: actions/checkout@v3
+
+      # Install rust toolchain
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          components: clippy
+
+      # Use cache to speed up builds
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/
+            target
+            Cargo.lock
+          key: check-with-clippy
+
+      # Execute clippy
+      - name: Run clippy
+        run: cargo clippy --color always --all --all-targets -- -D warnings
+          
+  fmt:
+    name: Check Formatting
+    env:
+      RUST_LOG: "0"
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the repository
+      - uses: actions/checkout@v3
+
+      # Install Rust toolchain
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          components: rustfmt
+
+      # Use cache to speed up builds
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/
+            target
+            Cargo.lock
+          key: check-with-fmt
+
+      # Execute rustfmt
+      - name: Check formating with rustfmt
+        run: |
+          cargo fmt --all -- --check

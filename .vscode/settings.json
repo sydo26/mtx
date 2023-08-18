@@ -1,0 +1,21 @@
+{
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/*.bk": true,
+        "**/target": true
+    },
+    "[rust]": {
+        "editor.formatOnSave": true
+    },
+    "editor.formatOnSave": true,
+    "git.ignoreLimitWarning": true,
+    "git.autoRepositoryDetection": false,
+    "git.ignoredRepositories": [],
+    "rust-analyzer.check.command": "clippy",
+    "rust-analyzer.check.features": [],
+    "rust-analyzer.cargo.features": []
+}

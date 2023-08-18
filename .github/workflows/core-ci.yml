@@ -1,0 +1,85 @@
+name: CI for Core Package
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+env:
+  RUST_BACKTRACE: full
+  CI: 1
+  CARGO_INCREMENTAL: 0
+  RUST_LOG: "debug"
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }}) - Rust ${{ matrix.rust }}
+    needs: [fmt, check]
+    strategy:
+      fail-fast: false
+      matrix:
+        rust:
+          - nightly
+          - beta
+          - stable
+        os:
+          - ubuntu-latest
+          - macos-11
+          - windows-latest
+
+        include:
+          - rust: nightly
+            benches: true
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      # Checkout the repository
+      - uses: actions/checkout@v3
+
+      # Use cache to speed up builds
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/
+            target
+            Cargo.lock
+          key: test-mtx-core-${{ matrix.rust }}-${{ matrix.os }}
+
+      # Install Rust toolchain
+      - name: Install Rust (${{ matrix.rust }})
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.rust }}
+
+      # Execute cargo test
+      - name: Run cargo test
+        run: |
+          cargo test --package mtx-core --color always
+
+
+  msrv:
+    name: Check MSRV (Minimum Supported Rust Version)
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the repository
+      - uses: actions/checkout@v3
+
+      # Get MSRV from package metadata
+      - name: Get MSRV from package metadata
+        id: metadata
+        run: |
+          cargo metadata --no-deps --format-version 1 |
+              jq -r '"msrv=" + (.packages[] | select(.name == "mtx-core")).rust_version' >> $GITHUB_OUTPUT
+
+      # Install Rust toolchain
+      - name: Install Rust (${{ steps.metadata.outputs.msrv }})
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ steps.metadata.outputs.msrv }}
+
+      # Execute cargo check in mtx-core crate
+      - name: Cargo check
+        run: cargo check --package mtx-core

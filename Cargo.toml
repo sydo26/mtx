@@ -1,0 +1,24 @@
+[package]
+name = "mtx-monorepo"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[workspace]
+members = ["cli", "crates/*"]
+resolver = "2"
+
+
+[profile.bench]
+debug = true
+
+[dev-dependencies]
+rusty-hook = "^0.11.2"
+
+
+# Binaries
+[[bin]]
+name = "pre-commit"
+path = "bin/pre-commit.rs"
+test = false
+bench = false
